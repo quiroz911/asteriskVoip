@@ -1,0 +1,39 @@
+#!/usr/bin/php -q
+<?php
+require 'phpagi.php'; // Asegúrate de que el archivo phpagi.php esté en el mismo directorio o en la ruta correcta.
+
+$agi = new AGI();
+
+// Obtener las variables "cedula" y "monto" de Asterisk
+$cedulaOrigen = $agi->get_variable('cedulaOrigen');
+$cedulaDestino = $agi->get_variable('cedulaDestino');
+$monto = $agi->get_variable('monto');
+
+// URL del backend
+$backend_url = 'http://localhost:8080/api/transferenciaByCedula/' . $cedulaOrigen . '/cedulaDestino/' . $cedulaDestino . '/monto/' . $monto;
+
+// Configurar la solicitud HTTP POST
+$options = [
+    'http' => [
+        'header' => "Content-type: application/x-www-form-urlencoded\r\n",
+        'method' => 'POST',
+        'content' => http_build_query($data),
+    ],
+];
+
+$context = stream_context_create($options);
+
+// Realizar una solicitud HTTP al backend
+$response = file_get_contents($backend_url, false, $context);
+
+// Enviar el resultado de la solicitud como respuesta a la llamada
+$agi->verbose("Resultado de la solicitud HTTP: $response");
+
+// Puedes usar el resultado para tomar decisiones en tu script o reproducir un mensaje de audio según corresponda
+if ($response === 'exito') {
+    $agi->stream_file('ruta_del_archivo_exito');
+} else {
+    $agi->stream_file('ruta_del_archivo_error');
+}
+
+$agi->hangup(); // Finalizar la llamada
